@@ -1,2 +1,3 @@
 export * from './HomeScreen';
-export * from './NoteScreen'
+export * from './NewTaskScreen';
+export * from './TaskDetailsScreen';

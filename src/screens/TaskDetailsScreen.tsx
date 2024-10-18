@@ -72,7 +72,7 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
     try {
       setIsDeleting(true);
       const response = await axios.delete(
-        `http://192.168.1.19:3000/notes/${id}`
+        `http://192.168.1.19:3000/tasks/${id}`
       );
       setIsDeleting(false);
       navigation.goBack();
@@ -111,7 +111,7 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
     try {
       setIsLoading(true);
       const response = await axios.get(
-        `http://192.168.1.19:3000/notes/${params.id}`
+        `http://192.168.1.19:3000/tasks/${params.id}`
       );
       if (response.status === 200) {
         setTaskData(response.data);
@@ -134,7 +134,7 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
     try {
       setIsUpdating(true);
       const response = await axios.put(
-        'http://192.168.1.19:3000/notes/${params.id}',
+        'http://192.168.1.19:3000/tasks/${params.id}',
         { ...data, status: currentStatus }
       );
       console.log({ response });

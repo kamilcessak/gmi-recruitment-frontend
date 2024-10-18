@@ -40,7 +40,7 @@ export const NewTaskScreen = () => {
       if (description?.length) {
         Object.assign(body, { description });
       }
-      const response = await axios.post('http://192.168.1.19:3000/notes', body);
+      const response = await axios.post('http://192.168.1.19:3000/tasks', body);
       console.log({ response });
       setIsLoading(false);
       if (response.status === 201) {

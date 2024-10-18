@@ -26,7 +26,7 @@ export const HomeScreen = () => {
   const getNotes = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://192.168.1.19:3000/notes');
+      const response = await axios.get('http://192.168.1.19:3000/tasks');
       setNotes(response.data);
       setIsLoading(false);
     } catch (error) {

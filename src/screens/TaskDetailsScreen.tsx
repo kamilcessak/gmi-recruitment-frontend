@@ -4,8 +4,9 @@ import React, {
   useState,
   useLayoutEffect,
   useCallback,
+  useMemo,
 } from 'react';
-import { View, Text, ScrollView, useWindowDimensions } from 'react-native';
+import { View, ScrollView, useWindowDimensions } from 'react-native';
 import {
   NavigationProp,
   RouteProp,
@@ -18,6 +19,7 @@ import {
   TextInput,
   Provider as PaperProvider,
   Button,
+  Text,
 } from 'react-native-paper';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Dropdown } from 'react-native-paper-dropdown';
@@ -26,6 +28,8 @@ import { NoteType } from '../types/note.type';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
+import { TaskDetailsItem } from '../components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type DetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetails'>;
 
@@ -58,6 +62,16 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { height, width } = useWindowDimensions();
   const headerHeight = useHeaderHeight();
+  const { bottom } = useSafeAreaInsets();
+
+  const detailsItems = useMemo(() => {
+    return [
+      { title: 'Title:', value: taskData?.title },
+      { title: 'Description:', value: taskData?.description },
+      { title: 'Task status:', value: taskData?.status },
+      { title: 'Created at:', value: taskData?.created_at },
+    ];
+  }, [taskData]);
 
   const {
     control,
@@ -84,26 +98,26 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <View
-          style={{
-            flexDirection: 'row',
-            marginRight: -16,
-          }}
-        >
-          <IconButton
-            icon="pencil"
-            size={24}
-            onPress={() => setEditMode((prev) => !prev)}
-          />
-          <IconButton
-            icon="delete"
-            size={24}
-            iconColor={'red'}
-            onPress={() => handleDeleteTask(`${params.id}`)}
-          />
-        </View>
-      ),
+      title: 'Task Details',
+      // headerRight: () => (
+      //   <View
+      //     style={{
+      //       flexDirection: 'row',
+      //       marginRight: -16,
+      //     }}
+      //   >
+      //     <IconButton
+      //       icon="pencil"
+      //       size={24}
+      //       onPress={() => setEditMode((prev) => !prev)}
+      //     />
+      //     <IconButton
+      //       icon="delete"
+      //       size={24}
+      //       onPress={() => handleDeleteTask(`${params.id}`)}
+      //     />
+      //   </View>
+      // ),
     });
   }, [navigation]);
 
@@ -134,11 +148,15 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
     try {
       setIsUpdating(true);
       const response = await axios.put(
-        'http://192.168.1.19:3000/tasks/${params.id}',
-        { ...data, status: currentStatus }
+        `http://192.168.1.19:3000/tasks/${params.id}`,
+        {
+          ...data,
+          status: currentStatus,
+        }
       );
-      console.log({ response });
       setIsUpdating(false);
+      setEditMode(false);
+      await getTask();
     } catch (error) {
       console.error(error);
       setIsUpdating(false);
@@ -148,10 +166,13 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
   const renderDetailsContent = useCallback(() => {
     return (
       <>
-        <Text>{taskData?.title}</Text>
-        <Text>{taskData?.description}</Text>
-        <Text>{taskData?.status}</Text>
-        <Text>{taskData?.created_at}</Text>
+        {detailsItems.map((e, i) => (
+          <TaskDetailsItem
+            key={`task-details-item-${i}-${e.value}`}
+            title={e.title}
+            value={e.value}
+          />
+        ))}
       </>
     );
   }, [taskData]);
@@ -201,8 +222,8 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
           )}
         />
         <Dropdown
-          label="Gender"
-          placeholder="Select Gender"
+          label="Task status"
+          placeholder="Select status"
           options={StatusItems}
           mode={'outlined'}
           value={currentStatus}
@@ -211,12 +232,6 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
           }}
           CustomMenuHeader={() => <></>}
         />
-        <Button mode={'outlined'} onPress={() => setEditMode(false)}>
-          Cancel
-        </Button>
-        <Button mode={'outlined'} onPress={handleSubmit(handleUpdateTask)}>
-          Save
-        </Button>
       </View>
     );
   }, [editMode, currentStatus]);
@@ -240,6 +255,64 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
           }}
         >
           <ActivityIndicator />
+        </View>
+      )}
+      {editMode && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom,
+            width: '100%',
+            paddingHorizontal: 16,
+            gap: 16,
+          }}
+        >
+          <Button
+            mode={'outlined'}
+            onPress={() => setEditMode(false)}
+            style={{ backgroundColor: 'white' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            mode={'outlined'}
+            onPress={() => handleDeleteTask(`${params.id}`)}
+            textColor={'red'}
+            style={{ backgroundColor: 'white' }}
+          >
+            Delete
+          </Button>
+          <Button
+            mode={'outlined'}
+            onPress={handleSubmit(handleUpdateTask)}
+            style={{ backgroundColor: 'white' }}
+          >
+            Save
+          </Button>
+        </View>
+      )}
+      {!editMode && (
+        <View style={{ position: 'absolute', bottom: 16, right: 16 }}>
+          <IconButton
+            icon="pencil"
+            size={30}
+            onPress={() => setEditMode((prev) => !prev)}
+            style={{
+              borderColor: 'black',
+              borderWidth: 1,
+              borderRadius: 24,
+            }}
+          />
+          <IconButton
+            icon="delete"
+            size={30}
+            onPress={() => handleDeleteTask(`${params.id}`)}
+            style={{
+              borderColor: 'black',
+              borderWidth: 1,
+              borderRadius: 24,
+            }}
+          />
         </View>
       )}
     </PaperProvider>

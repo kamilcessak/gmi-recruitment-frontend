@@ -1,9 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import {
   TouchableOpacity,
-  Text,
   ScrollView,
   RefreshControl,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 import axios from 'axios';
 import {
@@ -13,17 +19,23 @@ import {
 } from '@react-navigation/native';
 import { RootStackParamList } from '../types/navigation.type';
 import { NoteType } from '../types/note.type';
-import { ActivityIndicator } from 'react-native-paper';
+import { ActivityIndicator, Icon, IconButton, Text } from 'react-native-paper';
 
 export const HomeScreen = () => {
   const [notes, setNotes] = useState<NoteType[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isTaskUpdating, setIsTaskUpdating] = useState(false);
 
   const isScreenFocused = useIsFocused();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { height, width } = useWindowDimensions();
 
-  const getNotes = async () => {
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: 'Task List' });
+  }, [navigation]);
+
+  const getTasks = async () => {
     try {
       setIsLoading(true);
       const response = await axios.get('http://192.168.1.19:3000/tasks');
@@ -35,13 +47,32 @@ export const HomeScreen = () => {
     }
   };
 
+  const markTaskAsDone = async (id: number, status: string) => {
+    try {
+      setIsTaskUpdating(true);
+      const response = await axios.put(`http://192.168.1.19:3000/tasks/${id}`, {
+        status: status === 'to_do' ? 'done' : 'to_do',
+      });
+      console.log('hejka', { response });
+      setNotes(
+        (prev) =>
+          prev &&
+          prev.map((e) => (e.id === response.data.id ? response.data : e))
+      );
+      setIsTaskUpdating(false);
+    } catch (error) {
+      console.error(error);
+      setIsTaskUpdating(false);
+    }
+  };
+
   useEffect(() => {
-    void getNotes();
+    void getTasks();
   }, [isScreenFocused]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await getNotes();
+    await getTasks();
     setIsRefreshing(false);
   }, []);
 
@@ -55,34 +86,64 @@ export const HomeScreen = () => {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
       >
-        {notes?.map((e, i) => {
-          return (
+        {notes?.map((e, i) => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('TaskDetails', { id: e.id })}
+            key={`note-${i}-${e.id}`}
+            style={{
+              padding: 16,
+              backgroundColor: 'white',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text variant={'titleMedium'}>{e.title}</Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate('TaskDetails', { id: e.id })}
-              key={`note-${i}-${e.id}`}
+              onPress={() => markTaskAsDone(e.id, e.status)}
               style={{
-                padding: 16,
-                backgroundColor: 'white',
+                borderWidth: 1,
+                borderColor: 'black',
+                borderRadius: 8,
+                padding: 4,
+                zIndex: 999,
               }}
             >
-              <Text>{e.title}</Text>
+              {e.status === 'done' ? (
+                <Icon source={'check'} size={24} color={'black'} />
+              ) : (
+                <View style={{ height: 24, width: 24 }} />
+              )}
             </TouchableOpacity>
-          );
-        })}
+          </TouchableOpacity>
+        ))}
       </ScrollView>
-      <TouchableOpacity
+      <IconButton
+        icon={'plus'}
+        size={48}
         onPress={() => navigation.navigate('NewTask')}
         style={{
           position: 'absolute',
           bottom: 32,
-          right: 32,
-          padding: 16,
+          right: 16,
           borderRadius: 16,
-          backgroundColor: 'red',
+          backgroundColor: 'white',
         }}
-      >
-        <Text>Add</Text>
-      </TouchableOpacity>
+      />
+      {isTaskUpdating && (
+        <View
+          style={{
+            position: 'absolute',
+            height,
+            width,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          <ActivityIndicator />
+        </View>
+      )}
     </>
   );
 };

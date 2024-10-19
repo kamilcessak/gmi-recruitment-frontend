@@ -31,6 +31,7 @@ export const EditModeDetails: FC<Props> = ({
         name="title"
         render={({ field: { onChange, onBlur, value } }) => (
           <InputItem
+            label={'Title'}
             onBlur={onBlur}
             onChange={onChange}
             value={value}
@@ -43,6 +44,7 @@ export const EditModeDetails: FC<Props> = ({
         name="description"
         render={({ field: { onChange, onBlur, value } }) => (
           <InputItem
+            label={'Description'}
             onBlur={onBlur}
             onChange={onChange}
             value={value}

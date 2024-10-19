@@ -4,7 +4,12 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
-import { RefreshControl, ScrollView, useWindowDimensions } from 'react-native';
+import {
+  RefreshControl,
+  ScrollView,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import axios from 'axios';
 import {
   NavigationProp,
@@ -107,14 +112,26 @@ export const HomeScreen = () => {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
       >
-        {notes?.map((e, i) => (
-          <TaskItem
-            key={`task-item-${e.id}}-${i}`}
-            setIsTaskUpdating={setIsTaskUpdating}
-            task={e}
-            setNotes={setNotes}
-          />
-        ))}
+        {!notes?.length ? (
+          <View
+            style={{
+              height: height / 1.25,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text variant={'headlineSmall'}>Task list is empty</Text>
+          </View>
+        ) : (
+          notes?.map((e, i) => (
+            <TaskItem
+              key={`task-item-${e.id}}-${i}`}
+              setIsTaskUpdating={setIsTaskUpdating}
+              task={e}
+              setNotes={setNotes}
+            />
+          ))
+        )}
       </ScrollView>
       <NewTaskIcon
         icon={'plus'}

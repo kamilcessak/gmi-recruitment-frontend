@@ -39,7 +39,7 @@ export const TaskItem: FC<Props> = ({ task, setIsTaskUpdating, setNotes }) => {
       const response = await axios.put(
         `http://192.168.1.19:3000/tasks/${task.id}`,
         {
-          status: task.status === 'to_do' ? 'done' : 'to_do',
+          status: task.status !== 'done' ? 'done' : 'to_do',
         }
       );
       setNotes(

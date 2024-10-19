@@ -5,3 +5,8 @@ export type NoteType = {
   created_at: string;
   status: string;
 };
+
+export type FormData = {
+  title: string;
+  description?: string;
+};

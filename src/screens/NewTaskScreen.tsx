@@ -62,7 +62,7 @@ export const NewTaskScreen = () => {
       if (description?.length) {
         Object.assign(body, { description });
       }
-      await axios.post('http://192.168.1.19:3000/tasks', body);
+      await axios.post(`http://${process.env.EXPO_PUBLIC_API_URL}/tasks`, body);
     } catch (error) {
       console.error(error);
     }

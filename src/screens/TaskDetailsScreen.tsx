@@ -91,7 +91,7 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
 
   const handleDeleteTask = async () => {
     try {
-      await axios.delete(`http://192.168.1.19:3000/tasks/${params.id}`);
+      await axios.delete(`http://${process.env.EXPO_PUBLIC_API_URL}/tasks/${params.id}`);
     } catch (error) {
       console.error(error);
     }
@@ -115,7 +115,7 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
   const getTask = async () => {
     try {
       const response = await axios.get(
-        `http://192.168.1.19:3000/tasks/${params.id}`
+        `http://${process.env.EXPO_PUBLIC_API_URL}/tasks/${params.id}`
       );
       if (response.status === 200) {
         setTaskData(response.data);
@@ -136,7 +136,7 @@ export const TaskDetailsScreen: FC<{ route: DetailsScreenRouteProp }> = ({
 
   const handleUpdateTask = async (data: FormData) => {
     try {
-      await axios.put(`http://192.168.1.19:3000/tasks/${params.id}`, {
+      await axios.put(`http://${process.env.EXPO_PUBLIC_API_URL}/tasks/${params.id}`, {
         ...data,
         status: currentStatus,
       });

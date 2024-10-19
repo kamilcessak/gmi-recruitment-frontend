@@ -66,7 +66,7 @@ export const HomeScreen = () => {
 
   const getTasks = async () => {
     try {
-      const response = await axios.get('http://192.168.1.19:3000/tasks');
+      const response = await axios.get(`http://${process.env.EXPO_PUBLIC_API_URL}/tasks`);
       setNotes(response.data);
       return response.data;
     } catch (error) {

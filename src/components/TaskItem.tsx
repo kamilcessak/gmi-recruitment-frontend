@@ -37,7 +37,7 @@ export const TaskItem: FC<Props> = ({ task, setIsTaskUpdating, setNotes }) => {
     try {
       setIsTaskUpdating(true);
       const response = await axios.put(
-        `http://192.168.1.19:3000/tasks/${task.id}`,
+        `http://${process.env.EXPO_PUBLIC_API_URL}/tasks/${task.id}`,
         {
           status: task.status !== 'done' ? 'done' : 'to_do',
         }

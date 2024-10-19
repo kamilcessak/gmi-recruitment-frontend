@@ -4,13 +4,7 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
-import {
-  TouchableOpacity,
-  ScrollView,
-  RefreshControl,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { RefreshControl, ScrollView, useWindowDimensions } from 'react-native';
 import axios from 'axios';
 import {
   NavigationProp,
@@ -18,12 +12,42 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { RootStackParamList } from '../types/navigation.type';
-import { NoteType } from '../types/note.type';
-import { ActivityIndicator, Icon, IconButton, Text } from 'react-native-paper';
+import { TaskType } from '../types/task.type';
+import {
+  ActivityIndicator,
+  Button,
+  IconButton,
+  Text,
+} from 'react-native-paper';
+import { TaskItem } from '../components';
+import styled from 'styled-components/native';
+import { useQuery } from '@tanstack/react-query';
+
+const NewTaskIcon = styled(IconButton)`
+  position: absolute;
+  bottom: 32px;
+  right: 16px;
+  border-radius: 16px;
+  background-color: white;
+`;
+
+const AbsoluteActivityIndicator = styled.View`
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+`;
+
+const ErrorContainer = styled.View`
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+`;
 
 export const HomeScreen = () => {
-  const [notes, setNotes] = useState<NoteType[] | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [notes, setNotes] = useState<TaskType[] | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTaskUpdating, setIsTaskUpdating] = useState(false);
 
@@ -37,46 +61,43 @@ export const HomeScreen = () => {
 
   const getTasks = async () => {
     try {
-      setIsLoading(true);
       const response = await axios.get('http://192.168.1.19:3000/tasks');
       setNotes(response.data);
-      setIsLoading(false);
+      return response.data;
     } catch (error) {
       console.error(error);
-      setIsLoading(false);
     }
   };
 
-  const markTaskAsDone = async (id: number, status: string) => {
-    try {
-      setIsTaskUpdating(true);
-      const response = await axios.put(`http://192.168.1.19:3000/tasks/${id}`, {
-        status: status === 'to_do' ? 'done' : 'to_do',
-      });
-      console.log('hejka', { response });
-      setNotes(
-        (prev) =>
-          prev &&
-          prev.map((e) => (e.id === response.data.id ? response.data : e))
-      );
-      setIsTaskUpdating(false);
-    } catch (error) {
-      console.error(error);
-      setIsTaskUpdating(false);
-    }
-  };
+  const { isLoading, error, refetch } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: getTasks,
+  });
 
   useEffect(() => {
-    void getTasks();
+    void refetch();
   }, [isScreenFocused]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await getTasks();
+    await refetch();
     setIsRefreshing(false);
   }, []);
 
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} />;
+
+  if (error)
+    return (
+      <ErrorContainer>
+        <Text variant={'titleLarge'}>Error fetching tasks</Text>
+        <Button
+          onPress={() => refetch()}
+          style={{ borderWidth: 1, borderColor: 'black' }}
+        >
+          <Text variant={'titleMedium'}>Retry</Text>
+        </Button>
+      </ErrorContainer>
+    );
 
   return (
     <>
@@ -87,62 +108,23 @@ export const HomeScreen = () => {
         }
       >
         {notes?.map((e, i) => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('TaskDetails', { id: e.id })}
-            key={`note-${i}-${e.id}`}
-            style={{
-              padding: 16,
-              backgroundColor: 'white',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Text variant={'titleMedium'}>{e.title}</Text>
-            <TouchableOpacity
-              onPress={() => markTaskAsDone(e.id, e.status)}
-              style={{
-                borderWidth: 1,
-                borderColor: 'black',
-                borderRadius: 8,
-                padding: 4,
-                zIndex: 999,
-              }}
-            >
-              {e.status === 'done' ? (
-                <Icon source={'check'} size={24} color={'black'} />
-              ) : (
-                <View style={{ height: 24, width: 24 }} />
-              )}
-            </TouchableOpacity>
-          </TouchableOpacity>
+          <TaskItem
+            key={`task-item-${e.id}}-${i}`}
+            setIsTaskUpdating={setIsTaskUpdating}
+            task={e}
+            setNotes={setNotes}
+          />
         ))}
       </ScrollView>
-      <IconButton
+      <NewTaskIcon
         icon={'plus'}
         size={48}
         onPress={() => navigation.navigate('NewTask')}
-        style={{
-          position: 'absolute',
-          bottom: 32,
-          right: 16,
-          borderRadius: 16,
-          backgroundColor: 'white',
-        }}
       />
       {isTaskUpdating && (
-        <View
-          style={{
-            position: 'absolute',
-            height,
-            width,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          }}
-        >
+        <AbsoluteActivityIndicator style={{ height, width }}>
           <ActivityIndicator />
-        </View>
+        </AbsoluteActivityIndicator>
       )}
     </>
   );
